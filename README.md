@@ -24,7 +24,7 @@ Frontend (React) ↔ API (FastAPI) ↔ Team Router (agno) → Specialized Agents
 - Agents use Azure OpenAI models; responses are stateful via `agno` Memory + SQLite
 - Knowledge lives under `knowledge/` (JSON) and embeddings are cached under `embeddings/`
 
-See `api/api.py` for endpoints and startup; see `frontend/` for the UI.
+See `api/api.py` for endpoints and startup; see `frontend/` for the UI
 
 ---
 
