@@ -159,7 +159,3 @@ To regenerate embeddings for a domain, delete its folder under `embeddings/` and
 - Add auth/rate limits before exposing publicly
 
 ---
-
-## License 📄
-
-MIT
