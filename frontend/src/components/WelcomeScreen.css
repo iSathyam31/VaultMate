@@ -1,0 +1,149 @@
+/* Claude/ChatGPT Style Welcome Screen */
+.welcome-screen-claude {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100%;
+    padding: 2rem;
+    background: transparent;
+    color: white;
+}
+
+.welcome-container {
+    max-width: 800px;
+    width: 100%;
+    text-align: center;
+}
+
+/* Main Logo and Title */
+.welcome-main {
+    margin-bottom: 3rem;
+}
+
+.welcome-logo-large {
+    margin-bottom: 1.5rem;
+}
+
+.logo-icon-large {
+    font-size: 4.5rem;
+    display: inline-block;
+    animation: float 3s ease-in-out infinite;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.welcome-title-main {
+    font-size: 3.2rem;
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+    color: #ffffff;
+    letter-spacing: -0.01em;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.welcome-description {
+    font-size: 1.2rem;
+    color: #cbd5e1;
+    margin: 0;
+    line-height: 1.6;
+    font-weight: 400;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Suggestions Container */
+.suggestions-container {
+    width: 100%;
+}
+
+.suggestions-grid-claude {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 0.75rem;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.suggestion-card-claude {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    color: white;
+    font-size: 0.95rem;
+    font-weight: 400;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+    line-height: 1.4;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+}
+
+.suggestion-card-claude:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.25);
+    transform: translateY(-1px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .welcome-screen-claude {
+        padding: 1.5rem;
+    }
+
+    .welcome-title-main {
+        font-size: 2.6rem;
+    }
+
+    .welcome-description {
+        font-size: 1.1rem;
+    }
+
+    .suggestions-grid-claude {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+
+    .suggestion-card-claude {
+        padding: 0.875rem 1rem;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .welcome-screen-claude {
+        padding: 1rem;
+    }
+
+    .welcome-title-main {
+        font-size: 2rem;
+    }
+
+    .logo-icon-large {
+        font-size: 3.5rem;
+    }
+
+    .welcome-description {
+        font-size: 1rem;
+    }
+
+    .suggestion-card-claude {
+        padding: 0.75rem;
+        font-size: 0.85rem;
+        min-height: 45px;
+    }
+}

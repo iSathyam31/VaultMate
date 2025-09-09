@@ -1,15 +1,41 @@
-# Banking Master Agents Frontend
+# Banking Master Agent - Frontend
 
-A React-based frontend for interacting with Banking Master Agents through a clean, intuitive interface.
+A modern, intelligent React frontend for the Banking Master Agents system. This application provides a seamless chat interface that automatically routes banking queries to specialized AI agents.
 
-## Features
+## 🌟 Features
 
-- **Agent Selection**: Choose from 6 specialized banking agents
-- **Real-time Chat**: Interactive chat interface with each agent
-- **Markdown Support**: Rich text responses from agents
-- **Responsive Design**: Works on desktop and mobile devices
-- **Session Management**: Maintains conversation context
-- **Error Handling**: Graceful error handling and user feedback
+### 🤖 Intelligent Agent Routing
+- **Smart Query Analysis**: Automatically determines the best specialist for your banking question
+- **6 Specialized Agents**: Account Management, Card Services, Transactions, Loans & Investments, Payments, and General Banking
+- **Seamless Experience**: No need to choose which agent to talk to - just ask naturally
+
+### 💬 Advanced Chat Interface
+- **Real-time Messaging**: Instant responses with typing indicators
+- **Message History**: Automatic chat history persistence
+- **Search Functionality**: Full-text search through chat history (Ctrl+F)
+- **Export Conversations**: Download chat history as JSON
+- **Quick Actions**: Pre-defined common banking queries for quick access
+
+### 🎨 Modern UI/UX
+- **Dark/Light Themes**: Toggle between themes with smooth transitions
+- **Responsive Design**: Optimized for desktop, tablet, and mobile devices
+- **Smooth Animations**: Framer Motion powered animations and transitions
+- **Accessibility**: WCAG compliant design with proper contrast and keyboard navigation
+
+### ⚙️ Customization & Settings
+- **Theme Preferences**: Dark/Light mode with system preference detection
+- **Font Size Options**: Small, Medium, Large text sizes
+- **Compact Mode**: Condensed chat layout for power users
+- **Animation Controls**: Enable/disable animations for performance
+- **Interactive Tutorial**: Built-in help system for new users
+
+### 🔍 Enhanced Features
+- **Message Search**: Find any message in your chat history instantly
+- **Copy Messages**: One-click copy to clipboard
+- **Message Expansion**: Collapse/expand long messages
+- **Routing Indicators**: See which specialist handled your query
+- **Error Handling**: Graceful error recovery with user-friendly messages
+- **Notifications**: Toast notifications for user feedback
 
 ## Available Agents
 

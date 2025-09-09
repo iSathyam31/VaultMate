@@ -1,17 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import MainChatInterface from './components/MainChatInterface';
 import AgentInfo from './components/AgentInfo';
+import NotificationSystem from './components/NotificationSystem';
+import HelpTutorial from './components/HelpTutorial';
 import { checkHealth } from './services/api';
 
 function App() {
     const [apiStatus, setApiStatus] = useState('checking');
     const [showAgentInfo, setShowAgentInfo] = useState(false);
+    const [showTutorial, setShowTutorial] = useState(false);
 
     useEffect(() => {
         const checkApiHealth = async () => {
             try {
                 await checkHealth();
                 setApiStatus('connected');
+
+                // Check if tutorial should be shown
+                const tutorialCompleted = localStorage.getItem('banking-app-tutorial-completed');
+                if (!tutorialCompleted) {
+                    setTimeout(() => setShowTutorial(true), 1000);
+                }
             } catch (err) {
                 console.error('API health check failed:', err);
                 setApiStatus('disconnected');
@@ -26,7 +35,7 @@ function App() {
             <div className="app-container">
                 <div className="loading-screen">
                     <div className="loading-content">
-                        <h1>🏦 Banking Master Agent</h1>
+                        <h1>🏦 VaultMate</h1>
                         <div className="loading">
                             <span>Connecting to banking services...</span>
                             <div className="loading-dots">
@@ -46,7 +55,7 @@ function App() {
             <div className="app-container">
                 <div className="error-screen">
                     <div className="error-content">
-                        <h1>🏦 Banking Master Agent</h1>
+                        <h1>🏦 VaultMate</h1>
                         <div className="error-message">
                             <h3>⚠️ Connection Error</h3>
                             <p>Unable to connect to banking services. Please ensure the API server is running.</p>
@@ -68,7 +77,7 @@ function App() {
             <div className="app-header">
                 <div className="header-content">
                     <div className="header-left">
-                        <h1>🏦 Banking Master Agent</h1>
+                        <h1>🏦 VaultMate</h1>
                         <p>Intelligent AI assistant for all your banking needs</p>
                     </div>
                     <div className="header-right">
@@ -77,6 +86,13 @@ function App() {
                             onClick={() => setShowAgentInfo(!showAgentInfo)}
                         >
                             ℹ️ Agent Info
+                        </button>
+                        <button
+                            className="help-button"
+                            onClick={() => setShowTutorial(true)}
+                            title="Help & Tutorial"
+                        >
+                            ❓
                         </button>
                         <div className="status-indicator connected">
                             <span className="status-dot"></span>
@@ -97,6 +113,11 @@ function App() {
                     <MainChatInterface />
                 </div>
             </div>
+            <NotificationSystem />
+            <HelpTutorial
+                isOpen={showTutorial}
+                onClose={() => setShowTutorial(false)}
+            />
         </div>
     );
 }

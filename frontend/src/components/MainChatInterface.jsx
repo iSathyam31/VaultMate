@@ -1,18 +1,25 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { sendMessage } from '../services/api';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import { useChatHistory } from '../hooks/useChatHistory';
+import TypingIndicator from './TypingIndicator';
+import MessageBubble from './MessageBubble';
+import ChatSearch from './ChatSearch';
+import WelcomeScreen from './WelcomeScreen';
+import { AnimatePresence, motion } from 'framer-motion';
+import './ModernChat.css';
 
 const MainChatInterface = () => {
-    const [messages, setMessages] = useState([]);
     const [inputMessage, setInputMessage] = useState('');
-    const clearChat = () => {
-        setMessages([]);
-    };
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
     const [sessionId] = useState(`main_session_${Date.now()}`);
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [searchResults, setSearchResults] = useState([]);
     const messagesEndRef = useRef(null);
+    const inputRef = useRef(null);
+
+    // Use the chat history hook
+    const { messages, setMessages, addMessage, clearMessages, exportChat } = useChatHistory(sessionId);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -22,34 +29,41 @@ const MainChatInterface = () => {
         scrollToBottom();
     }, [messages]);
 
+    // Focus input on mount
     useEffect(() => {
-        // Add welcome message when component mounts
-        const welcomeMessage = {
-            type: 'agent',
-            content: `# Welcome to Banking Master Agent! 🏦
-
-I'm your intelligent banking assistant that can help you with all your banking needs. I automatically route your questions to the most appropriate specialist:
-
-**What I can help you with:**
-- 🏦 **Account Management** - Balances, profiles, deposits
-- 💳 **Card Services** - Credit/debit cards, limits, rewards  
-- 💸 **Transactions** - History, transfers, payments
-- 📈 **Loans & Investments** - EMIs, mutual funds, insurance
-- 🔄 **Payees & Payments** - Recurring payments, beneficiaries
-- 🛠️ **General Banking** - Credit scores, alerts, services
-
-**Just ask me anything!** For example:
-- "What's my account balance?"
-- "Show me my credit card statement"
-- "When is my next EMI due?"
-- "What are my recent transactions?"
-
-How can I assist you today?`,
-            timestamp: new Date(),
-            agentName: 'MainBankingMasterAgent'
-        };
-        setMessages([welcomeMessage]);
+        if (inputRef.current) {
+            inputRef.current.focus();
+        }
     }, []);
+
+    // Keyboard shortcuts
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            // Ctrl/Cmd + F to open search
+            if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                e.preventDefault();
+                setIsSearchOpen(true);
+            }
+            // Escape to close search
+            if (e.key === 'Escape' && isSearchOpen) {
+                setIsSearchOpen(false);
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [isSearchOpen]);
+
+    // Handle suggested question from welcome screen
+    const handleSuggestedQuestion = (question) => {
+        setInputMessage(question);
+        // Auto-focus the input after setting the message
+        setTimeout(() => {
+            if (inputRef.current) {
+                inputRef.current.focus();
+            }
+        }, 100);
+    };
 
     const handleSendMessage = async (e) => {
         e.preventDefault();
@@ -62,7 +76,7 @@ How can I assist you today?`,
             timestamp: new Date(),
         };
 
-        setMessages(prev => [...prev, userMessage]);
+        addMessage(userMessage);
         setInputMessage('');
         setIsLoading(true);
         setError(null);
@@ -84,10 +98,15 @@ How can I assist you today?`,
                 routedTo: getRoutedAgentInfo(response.agent_name)
             };
 
-            setMessages(prev => [...prev, agentMessage]);
+            addMessage(agentMessage);
         } catch (err) {
             setError('Failed to send message. Please try again.');
             console.error('Error sending message:', err);
+
+            // Show notification
+            if (window.showNotification) {
+                window.showNotification('Failed to send message. Please try again.', 'error');
+            }
 
             // Add error message to chat
             const errorMessage = {
@@ -95,7 +114,7 @@ How can I assist you today?`,
                 content: 'Sorry, I encountered an error processing your request. Please try again.',
                 timestamp: new Date(),
             };
-            setMessages(prev => [...prev, errorMessage]);
+            addMessage(errorMessage);
         } finally {
             setIsLoading(false);
         }
@@ -114,187 +133,142 @@ How can I assist you today?`,
         return agentInfo[agentName] || { icon: '🤖', name: 'Banking Assistant', color: '#6c757d' };
     };
 
-    const handleQuickAction = (action) => {
-        setInputMessage(action);
+
+
+    const adjustTextareaHeight = (textarea) => {
+        textarea.style.height = 'auto';
+        const maxHeight = 120; // Max 5 lines approximately
+        textarea.style.height = Math.min(textarea.scrollHeight, maxHeight) + 'px';
     };
 
-    const quickActions = [
-        "What's my account balance?",
-        "Show me my credit card details",
-        "Recent transactions",
-        "When is my next EMI due?",
-        "Show my registered payees",
-        "What's my credit score?"
-    ];
-
     return (
-        <div className="main-chat-container">
-    <div className="chat-toolbar">
-        <button onClick={clearChat} className="clear-chat-button">Clear Chat</button>
-    </div>
-            <div className="chat-messages">
-                {messages.map((message, index) => (
-                    <div key={index} className={`message ${message.type}`}>
-                        <div className="message-header">
-                            <div className="message-avatar">
-                                {message.type === 'user' ? (
-                                    <span className="user-avatar">👤</span>
-                                ) : message.type === 'error' ? (
-                                    <span className="error-avatar">⚠️</span>
-                                ) : (
-                                    <span className="agent-avatar">
-                                        {message.routedTo?.icon || '🏦'}
-                                    </span>
-                                )}
-                            </div>
-                            <div className="message-info">
-                                <span className="message-sender">
-                                    {message.type === 'user' ? 'You' :
-                                        message.type === 'error' ? 'System' :
-                                            message.routedTo?.name || 'Banking Agent'}
-                                </span>
-                                <span className="message-time">
-                                    {message.timestamp.toLocaleTimeString([], {
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                    })}
-                                </span>
-                            </div>
-                        </div>
-                        <div className="message-content">
-                            {message.type === 'agent' ? (
-                                <ReactMarkdown
-                                    remarkPlugins={[remarkGfm]}
-                                    components={{
-                                        table: ({ node, ...props }) => (
-                                            <table className="markdown-table" {...props} />
-                                        ),
-                                        th: ({ node, ...props }) => (
-                                            <th className="markdown-th" {...props} />
-                                        ),
-                                        td: ({ node, ...props }) => (
-                                            <td className="markdown-td" {...props} />
-                                        ),
-                                        code: ({ node, inline, ...props }) => (
-                                            inline ?
-                                                <code className="markdown-code-inline" {...props} /> :
-                                                <code className="markdown-code-block" {...props} />
-                                        ),
-                                        h1: ({ node, ...props }) => <h1 className="markdown-h1" {...props} />,
-                                        h2: ({ node, ...props }) => <h2 className="markdown-h2" {...props} />,
-                                        h3: ({ node, ...props }) => <h3 className="markdown-h3" {...props} />,
-                                        ul: ({ node, ...props }) => <ul className="markdown-ul" {...props} />,
-                                        ol: ({ node, ...props }) => <ol className="markdown-ol" {...props} />,
-                                        li: ({ node, ...props }) => <li className="markdown-li" {...props} />,
-                                        p: ({ node, ...props }) => <p className="markdown-p" {...props} />,
-                                        strong: ({ node, ...props }) => <strong className="markdown-strong" {...props} />,
-                                        em: ({ node, ...props }) => <em className="markdown-em" {...props} />
-                                    }}
-                                >
-                                    {message.content}
-                                </ReactMarkdown>
-                            ) : (
-                                <p>{message.content}</p>
+        <div className="modern-chat-container">
+
+
+            {/* Messages Area or Welcome Screen */}
+            <div className="chat-messages-area">
+                {messages.length === 0 ? (
+                    <WelcomeScreen onSuggestedQuestion={handleSuggestedQuestion} />
+                ) : (
+                    <div className="messages-container">
+                        <AnimatePresence mode="popLayout">
+                            {messages.map((message, index) => (
+                                <MessageBubble
+                                    key={`${message.timestamp}-${index}`}
+                                    message={message}
+                                    index={index}
+                                />
+                            ))}
+                        </AnimatePresence>
+
+                        <AnimatePresence>
+                            {isLoading && (
+                                <TypingIndicator
+                                    agentName="VaultMate"
+                                    agentIcon="🏦"
+                                />
                             )}
-                        </div>
-                        {message.routedTo && message.agentName !== 'MainBankingMasterAgent' && (
-                            <div className="routing-info">
-                                <span
-                                    className="routing-badge"
-                                    style={{ backgroundColor: message.routedTo.color }}
+                        </AnimatePresence>
+
+                        <AnimatePresence>
+                            {error && (
+                                <motion.div
+                                    className="error-message-modern"
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.8 }}
                                 >
-                                    {message.routedTo.icon} Routed to {message.routedTo.name}
-                                </span>
+                                    <div className="error-content">
+                                        <span className="error-icon">⚠️</span>
+                                        <span className="error-text">{error}</span>
+                                        <button
+                                            onClick={() => setError(null)}
+                                            className="error-close"
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        <div ref={messagesEndRef} />
+                    </div>
+                )}
+            </div>
+
+            {/* Enhanced Input Area */}
+            <motion.div
+                className="chat-input-area"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+            >
+                <form onSubmit={handleSendMessage} className="modern-input-form">
+                    <div className="input-container">
+                        <div className="input-wrapper-modern">
+                            <textarea
+                                ref={inputRef}
+                                rows={1}
+                                value={inputMessage}
+                                onChange={(e) => {
+                                    setInputMessage(e.target.value);
+                                    adjustTextareaHeight(e.target);
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handleSendMessage(e);
+                                    }
+                                }}
+                                placeholder="Type your message here..."
+                                className="modern-chat-input"
+                                disabled={isLoading}
+                                maxLength={2000}
+                            />
+                            <div className="input-actions">
+                                <div className="char-counter">
+                                    {inputMessage.length}/2000
+                                </div>
+                                <motion.button
+                                    type="submit"
+                                    className="modern-send-button"
+                                    disabled={isLoading || !inputMessage.trim()}
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                >
+                                    {isLoading ? (
+                                        <div className="loading-spinner-modern">
+                                            <div className="spinner"></div>
+                                        </div>
+                                    ) : (
+                                        <span className="send-icon">📤</span>
+                                    )}
+                                </motion.button>
                             </div>
+                        </div>
+                        {inputMessage.length > 0 && (
+                            <motion.div
+                                className="input-suggestions"
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                            >
+                                <div className="suggestion-tip">
+                                    💡 Press <kbd>Enter</kbd> to send, <kbd>Shift + Enter</kbd> for new line
+                                </div>
+                            </motion.div>
                         )}
                     </div>
-                ))}
-
-                {isLoading && (
-                    <div className="message agent">
-                        <div className="message-header">
-                            <div className="message-avatar">
-                                <span className="agent-avatar">🏦</span>
-                            </div>
-                            <div className="message-info">
-                                <span className="message-sender">Banking Agent</span>
-                                <span className="message-time">Processing...</span>
-                            </div>
-                        </div>
-                        <div className="message-content">
-                            <div className="loading">
-                                <span>Analyzing your request and routing to the best specialist...</span>
-                                <div className="loading-dots">
-                                    <div className="loading-dot"></div>
-                                    <div className="loading-dot"></div>
-                                    <div className="loading-dot"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {error && (
-                    <div className="error-banner">
-                        <span>⚠️ {error}</span>
-                        <button onClick={() => setError(null)}>✕</button>
-                    </div>
-                )}
-
-                <div ref={messagesEndRef} />
-            </div>
-
-            {messages.length === 1 && (
-                <div className="quick-actions">
-                    <h4>Quick Actions:</h4>
-                    <div className="quick-actions-grid">
-                        {quickActions.map((action, index) => (
-                            <button
-                                key={index}
-                                className="quick-action-button"
-                                onClick={() => handleQuickAction(action)}
-                                disabled={isLoading}
-                            >
-                                {action}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            <div className="chat-input-container">
-                <form onSubmit={handleSendMessage} className="chat-input-form">
-                    <div className="input-wrapper">
-                        <textarea
-                            rows={2}
-                            value={inputMessage}
-                            onChange={(e) => setInputMessage(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                    e.preventDefault();
-                                    handleSendMessage(e);
-                                }
-                            }}
-                            placeholder="Ask me anything about your banking needs..."
-                            className="chat-input"
-                            disabled={isLoading}
-                        >
-                            {inputMessage}
-                        </textarea>
-                        <button
-                            type="submit"
-                            className="send-button"
-                            disabled={isLoading || !inputMessage.trim()}
-                        >
-                            {isLoading ? (
-                                <span className="loading-spinner">⏳</span>
-                            ) : (
-                                <span>Send 📤</span>
-                            )}
-                        </button>
-                    </div>
                 </form>
-            </div>
+            </motion.div>
+
+            <ChatSearch
+                messages={messages}
+                onSearchResults={setSearchResults}
+                isOpen={isSearchOpen}
+                onClose={() => setIsSearchOpen(false)}
+            />
         </div>
     );
 };
